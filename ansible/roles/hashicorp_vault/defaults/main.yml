@@ -1,0 +1,9 @@
+---
+# defaults file for hashicorp_vault
+hashi_vault_version: 1.20.4
+hashi_vault_container_name: vault
+hashi_vault_path: /opt/vault
+hashi_vault_key_shares: 3
+hashi_vault_key_threshold: 2
+hashi_vault_init: false
+hashi_vault_unseal: false

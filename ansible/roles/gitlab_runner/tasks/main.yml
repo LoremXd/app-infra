@@ -1,0 +1,54 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for gitlab_runner
+
+- block:
+  - name: Download gitlab-runner
+    get_url:
+      url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+      dest: /usr/local/bin/gitlab-runner
+      mode: o=rwx,g=rx,u=rx
+
+  - name: Set the correct permissions for gitlab-runner
+    ansible.builtin.file:
+      path: /usr/local/bin/gitlab-runner
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Add user for runner
+    ansible.builtin.user:
+      name: gitlab-runner
+      home: /home/gitlab-runner
+      shell: /bin/bash
+      state: present
+      comment: Gitlab Runner
+
+  - name: Check gitlab runner service
+    ansible.builtin.service:
+      name: gitlab-runner.service
+    register: result
+
+  - block:
+    - name: Install gitlab-runner
+      shell: gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
+
+    - name: Register gitlab-runner
+      shell: gitlab-runner register -n \
+        --url https://gitlab.com/ \
+        --registration-token "{{ reg_token }}" \
+        --executor docker \
+        --description "Docker runner socket" \
+        --docker-image "docker:latest" \
+        --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
+        --tag-list "{{ runner_tag }}"
+
+    - name: Start gitlab-runner service
+      ansible.builtin.service:
+        name: gitlab-runner.service
+        state: started
+
+    when: result.status.ActiveState != "active"
+  become: yes
+
+

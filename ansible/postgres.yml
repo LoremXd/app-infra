@@ -1,0 +1,8 @@
+---
+- hosts: postgres
+  roles:
+    - common
+    - createuser
+#    - root_ca
+#    - docker
+    - install_postgres

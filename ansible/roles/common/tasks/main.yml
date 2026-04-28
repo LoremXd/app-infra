@@ -1,0 +1,7 @@
+---
+# tasks file for common
+- name: Set timezone to {{ time_region }}/{{ time_city }}
+  ansible.builtin.timezone:
+    name: "{{ time_region }}/{{ time_city }}"
+  become: yes
+

@@ -1,0 +1,8 @@
+---
+- hosts: vault-1
+  roles:
+    - common
+    - createuser
+    - docker
+#    - hashicorp_vault
+

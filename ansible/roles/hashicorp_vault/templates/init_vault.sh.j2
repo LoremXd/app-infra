@@ -1,0 +1,5 @@
+
+VAULT_KEY_SHARES={{ hashi_vault_key_shares }}
+VAULT_KEY_THRESHOLD={{ hashi_vault_key_threshold }}
+
+vault operator init -key-shares=$VAULT_KEY_SHARES -key-threshold=$VAULT_KEY_THRESHOLD | tee init.log

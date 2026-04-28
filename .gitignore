@@ -1,0 +1,8 @@
+sample-app/
+
+terraform/*/secret.auto.tfvars
+terraform/*/terraform.tfstate*
+terraform/*/.terraform*
+
+ansible/.hashi-vault-token
+ansible/.vault.pass

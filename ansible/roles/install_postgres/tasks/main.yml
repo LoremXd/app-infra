@@ -1,0 +1,52 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for install_postgres
+
+- block:
+  - name: Add CentOS repos for PostgreSQL
+    ansible.builtin.yum_repository:
+      name: postgres-{{ pg_version }}
+      description: postgres-{{ pg_version }}
+      baseurl: https://download.postgresql.org/pub/repos/yum/{{ pg_version }}/{{ ansible_facts['os_family'] | lower }}/rhel-{{ ansible_facts['distribution_version'] }}-{{ ansible_facts['architecture'] }}/
+      gpgcheck: true
+      gpgkey: https://download.postgresql.org/pub/repos/yum/keys/PGDG-RPM-GPG-KEY-RHEL
+      enabled: true
+
+  - name: Install PostgreSQL
+    ansible.builtin.dnf:
+      name:
+        - postgresql{{ pg_version }}-server
+        - postgresql{{ pg_version }}-contrib
+
+  - name: Start PostgreSQL systemd service
+    ansible.builtin.systemd_service:
+      name: postgresql-{{ pg_version  }}
+      state: started
+      enabled: true
+  become: yes
+  when: ansible_facts['os_family'] == "RedHat"
+
+- block:
+  - name: Add GPG key for PostgreSQL
+    ansible.builtin.apt_key:
+      url: https://download.postgresql.org/pub/repos/apt/ACCC4CF8.asc
+      state: present
+
+  - name: Add repo for PostgreSQL
+    ansible.builtin.apt_repository:
+      repo: "deb [arch=amd64] https://download.postgresql.org/pub/repos/apt {{ ansible_facts['distribution_release'] }}-pgdg main"
+      state: present
+
+  - name: Install PostgreSQL
+    ansible.builtin.apt:
+      name: postgresql-{{ pg_version }}
+
+  - name: Start PostgreSQL systemd service
+    ansible.builtin.systemd_service:
+      name: postgresql
+      state: started
+      enabled: true
+  become: yes
+  when: ansible_facts['os_family'] == "Debian"
+
+

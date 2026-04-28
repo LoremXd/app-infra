@@ -1,0 +1,5 @@
+---
+# defaults file for docker
+
+new_user: loremxd
+compose_version: 2.38.0

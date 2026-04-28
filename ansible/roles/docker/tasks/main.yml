@@ -1,0 +1,94 @@
+---
+# tasks file for docker
+
+- block:
+  - name: Add CentOS repos for docker
+    ansible.builtin.yum_repository:
+      name: docker-ce
+      description: docker-ce-stable
+      baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+      gpgcheck: true
+      gpgkey: https://download.docker.com/linux/centos/gpg
+      enabled: true
+
+  - name: Install docker
+    ansible.builtin.dnf:
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+
+  - name: Download docker-compose
+    ansible.builtin.get_url:
+      url: https://github.com/docker/compose/releases/download/v{{ compose_version }}/docker-compose-{{ ansible_facts['system'] }}-{{ ansible_facts['architecture'] }}
+      dest: /usr/local/bin/docker-compose
+      mode: u+x,g+x,o+x
+  become: yes
+  when: ansible_facts['os_family'] == "RedHat"
+
+- block:
+  - name: Add GPG key for docker
+    ansible.builtin.apt_key:
+      url: https://download.docker.com/linux/debian/gpg
+      state: present
+
+  - name: Add repo for docker
+    ansible.builtin.apt_repository:
+      repo: "deb https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable"
+      state: present
+
+  - name: Install docker
+    ansible.builtin.apt:
+      state: present
+      update_cache: yes
+      name: docker-ce
+
+  - name: Download docker-compose
+    ansible.builtin.get_url:
+      url: https://github.com/docker/compose/releases/download/v{{ compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
+      dest: /usr/local/bin/docker-compose
+      mode: u+x,g+x,o+x
+  become: yes
+  when: ansible_facts['os_family'] == "Debian"
+
+- block:
+    - name: Install docker
+      ansible.builtin.apt:
+        state: present
+        update_cache: yes
+        name:
+          - docker.io
+
+    - name: Download docker-compose
+      ansible.builtin.get_url:
+        url: https://github.com/docker/compose/releases/download/v{{ compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
+        dest: /usr/local/bin/docker-compose
+        mode: u+x,g+x,o+x
+  become: yes
+  when: ansible_facts['os_family'] == "Astra Linux"
+
+- name: Start docker systemd service
+  ansible.builtin.systemd_service:
+    name: docker
+    state: started
+    enabled: true
+  become: yes
+
+- name: Add "{{ ansible_facts['user_id'] }}" to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_facts['user_id'] }}"
+    groups: docker
+    append: yes
+  become: yes
+
+- name: Add "{{ new_user }}" to docker group
+  ansible.builtin.user:
+    name: "{{ new_user }}"
+    groups: docker
+    append: yes
+  become: yes
+
+- name: Reset ssh connection
+  ansible.builtin.meta: reset_connection

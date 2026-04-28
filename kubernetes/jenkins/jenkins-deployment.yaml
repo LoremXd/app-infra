@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      nodeName: kube-node-1
+      securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+      serviceAccountName: jenkins
+      containers:
+        - name: jenkins
+          image: harbor.loremxd/infra/jenkins:2.555.1-lts
+          env:
+            - name: JAVA_OPTS
+              value: -Djenkins.install.runSetupWizard=true
+          ports:
+            - name: http-port
+              containerPort: 8080
+            - name: jnlp-port
+              containerPort: 50000
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+      volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: jenkins-home-pvc

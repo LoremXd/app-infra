@@ -1,0 +1,56 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for root_ca
+
+- name: Get root ca certificate from vault
+  ansible.builtin.set_fact:
+    root_ca: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=' + vault_secret + ' token=' + vault_token + ' Validate_certs=True') }}"
+
+- block:
+  - name: Add root_ca cert file
+    ansible.builtin.copy:
+      dest: /usr/local/share/ca-certificates/ca.crt
+      content: "{{ root_ca['cert'] | b64decode }}"
+      owner: root
+      group: root
+      mode: '0600'
+    register: result
+
+  - name: Update CA Trust
+    ansible.builtin.shell:
+      cmd: update-ca-certificates
+    when: result is changed
+  become: yes
+  when: ansible_facts['os_family'] == "Debian"
+
+- block:
+  - name: Add root_ca cert file
+    ansible.builtin.copy:
+      dest: /etc/pki/ca-trust/source/anchors/ca.crt
+      content: "{{ root_ca['cert'] | b64decode }}"
+      owner: root
+      group: root
+      mode: '0600'
+    register: result
+
+  - name: Update CA Trust
+    ansible.builtin.shell:
+      cmd: update-ca-trust
+    when: result is changed
+  become: yes
+  when: ansible_facts['os_family'] == "RedHat"
+
+- block:
+  - name: Add root_ca cert file
+    ansible.builtin.copy:
+      dest: /usr/share/ca-certificates/ca.crt
+      content: "{{ root_ca['cert'] | b64decode }}"
+      mode: '0600'
+    register: result
+
+  - name: Update CA Trust
+    ansible.builtin.shell:
+      cmd:  sudo dpkg-reconfigure -f noninteractive ca-certificates
+    when: result is changed
+  become: yes
+  when: ansible_facts['os_family'] == "Astra Linux"

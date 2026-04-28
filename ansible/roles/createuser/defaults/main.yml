@@ -1,0 +1,11 @@
+---
+# defaults file for createuser
+
+new_user: example
+new_user_ssh_key: example
+new_user_password: $6$Tbnyg6NhxpF75OE6$KuobgfZsAPF6XX0A6i9ZerJCm6RyrcsFEvfc0spLWBsCkHpVR0FRwpoWWE3jvCD8hqdC6Abr15dz2AbY8HtZX0 
+new_user_sudoers: false
+
+vault_secret: kv/example
+vault_url: https://vault:8200
+vault_token: example

@@ -1,0 +1,82 @@
+---
+# tasks file for hashicorp_vault
+
+- name: Add directory for vault
+  ansible.builtin.file:
+    path: "{{ hashi_vault_path }}"
+    state: directory
+  become: yes
+
+- name: Copy config.hcl
+  ansible.builtin.template:
+    src: config.hcl.j2
+    dest: "{{ hashi_vault_path }}/config.hcl"
+    mode: "0755"
+    backup: yes
+  become: yes
+  notify:
+    - Restart hashicorp vault container
+    - Unseal vault
+
+- name: Copy docker-compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ hashi_vault_path }}/docker-compose.yml"
+    mode: "0755"
+    backup: yes
+  become: yes
+  notify:
+    - Restart hashicorp vault container
+    - Unseal vault
+
+- name: Run hashicorp vault container
+  community.docker.docker_compose_v2:
+    project_src: "{{ hashi_vault_path }}"
+    state: present
+
+- block:
+  - name: Add vault init script
+    ansible.builtin.template:
+      src: init_vault.sh.j2
+      dest: "{{ hashi_vault_path }}/init_vault.sh"
+      mode: "0755"
+    become: yes
+
+  - name: Copy init script to container
+    community.docker.docker_container_copy_into:
+      container: "{{ hashi_vault_container_name }}"
+      path: "{{ hashi_vault_path }}/init_vault.sh"
+      container_path: /vault/init_vault.sh
+
+  - name: Run init script
+    community.docker.docker_container_exec:
+      container: "{{ hashi_vault_container_name }}"
+      chdir: /vault
+      command: sh init_vault.sh
+    register: result
+
+  - name: Print result completed init script
+    debug:
+      var: result.stdout
+  when: hashi_vault_init == true
+
+- block:
+  - name: Add vault unseal script
+    ansible.builtin.template:
+      src: unseal_vault.sh.j2
+      dest: "{{ hashi_vault_path }}/unseal_vault.sh"
+      mode: "0755"
+    become: yes
+
+  - name: Copy unseal script to container
+    community.docker.docker_container_copy_into:
+      container: "{{ hashi_vault_container_name }}"
+      path: "{{ hashi_vault_path }}/unseal_vault.sh"
+      container_path: /vault/unseal_vault.sh
+
+  - name: Run unseal script
+    community.docker.docker_container_exec:
+      container: "{{ hashi_vault_container_name }}"
+      chdir: /vault
+      command: sh unseal_vault.sh
+  when: hashi_vault_unseal == true

@@ -1,0 +1,34 @@
+---
+# tasks file for createuser
+- block:
+  - name: Add user "{{ new_user }}"
+    ansible.builtin.user:
+      name: "{{ new_user }}"
+      state: present
+      password: "{{ new_user_password }}"
+      shell: "/bin/bash"
+      create_home: yes
+
+  - name: Create .ssh directory
+    ansible.builtin.file:
+      path: /home/{{ new_user }}/.ssh
+      state: directory
+      mode: '0700'
+      owner: "{{ new_user }}"
+      group: "{{ new_user }}"
+
+  - name: Create authorized_keys file and insert keys
+    ansible.posix.authorized_key:
+      user: "{{ new_user }}"
+      state: present
+      key: "{{ item }}"
+    loop: "{{ new_user_ssh_key }}"
+
+  - name: Add new user "{{ new_user }}" to sudoers
+    community.general.sudoers:
+      name: Ansible rule for "{{ new_user }}"
+      user: "{{ new_user }}"
+      nopassword: true
+      commands: ALL
+    when: new_user_sudoers == true
+  become: yes

@@ -1,0 +1,12 @@
+
+VAULT_KEY_THRESHOLD={{ hashi_vault_key_threshold }}
+
+VAULT_KEYS=$(cat init.log | grep "Key" | awk -F" " '{print $4}')
+VAULT_ROOT_TOKEN=$(cat init.log | grep "Root" | awk -F" " '{print $4}')
+
+i=1
+while [ "$i" -le $VAULT_KEY_THRESHOLD ];
+do
+        vault operator unseal $(echo $VAULT_KEYS |awk -v i="$i" -F" " '{print $i}')
+        i=$(( i + 1 ))
+done
