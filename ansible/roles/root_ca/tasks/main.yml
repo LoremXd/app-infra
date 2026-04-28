@@ -50,7 +50,7 @@
 
   - name: Update CA Trust
     ansible.builtin.shell:
-      cmd:  sudo dpkg-reconfigure -f noninteractive ca-certificates
+      cmd:  dpkg-reconfigure -f noninteractive ca-certificates
     when: result is changed
   become: yes
   when: ansible_facts['os_family'] == "Astra Linux"
